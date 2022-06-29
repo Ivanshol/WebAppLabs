@@ -1,0 +1,460 @@
+openapi: 3.0.0
+info:
+  description: |
+    This is a Phonebook server that allows you to keep a personal phonebook.
+          The user can add, delete and edit directory entries. Each entry
+          consists of a name, there are numbers associated with it. You must
+          also enter an alias for each number to identify the numbers in one
+          entry.  
+    
+    # Authentication
+
+    Phonebook offers two forms of authentication:
+      - Web token
+
+  version: 1.0.0
+  title: Phonebook
+  termsOfService: 'http://swagger.io/terms/'
+  contact:
+    name: API Support
+    email: apiteam@swagger.io
+    url: https://github.com/Redocly/redoc
+tags:
+  - name: auth
+    description: Everything about authorization
+  - name: phonebook
+    description: Operations with phonebook records
+paths:
+  /auth/registration:
+    post:
+      tags:
+        - auth
+      summary: Register user
+      description: Add new user to the store.
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: Failed
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  description: User first name
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  example: John
+                lastName:
+                  description: User last name
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  example: Smith
+                email:
+                  description: User email address
+                  type: string
+                  format: email
+                  example: john.smith@example.com
+                  uniqueItems: true
+                dateOfBirth:
+                  type: number
+                  description: User date of birth (timestamp)
+                  example: 1331209044000
+                gender:
+                  type: string
+                  description: User gender (Male or Female)
+                  enum:
+                    - Male
+                    - Female
+                  example: Male
+                password:
+                  type: string
+                  description: User password
+                  minLength: 3
+                  maxLength: 50
+              required:
+                - firstName
+                - lastName
+                - email
+                - dateOfBirth
+                - gender
+                - password
+  /auth/login:
+    post:
+      tags:
+        - auth
+      summary: Login as user
+      description: Authorization in the app
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYyNWM0NGI3NmJlNjEzOWE4N2FhODA1MyIsImVtYWlsIjoiZGltYUB0ZXN0LmNvbSIsImZpcnN0TmFtZSI6ImRpbWEiLCJsYXN0TmFtZSI6InRlc3QiLCJnZW5kZXIiOiJNYWxlIiwiZGF0ZU9mQmlydGgiOiIxOTcwLTAxLTE0VDIzOjM2OjE3LjY3NVoiLCJpYXQiOjE2NTAyMTQyMDR9.Dl4kmaqSFcZ8rP7gAM0retem6ANwZhpmWH0IiM3ti1U
+        '400':
+          description: Login failed
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  description: User email
+                  type: string
+                  format: email
+                password:
+                  description: User password
+                  type: string
+              required:
+                - email
+                - password
+  /auth/users:
+    get:
+      tags:
+        - auth
+      summary: Get all users
+      description: Only for authorized user via barear token
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '400':
+          description: Failed
+        '403':
+          description: User not authorized
+  /auth/user/{userId}:
+    get:
+      tags:
+        - auth
+      summary: Get user by id
+      description: Only for authorized user via barear token
+      parameters:
+        - name: userId
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Failed
+        '403':
+          description: User not authorized
+  /phonebook/records:
+    get:
+      tags:
+        - phonebook
+      summary: Get all records
+      description: Only for authorized user via barear token
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Record'
+        '400':
+          description: Failed
+        '403':
+          description: User not authorized
+  /phonebook/{userId}/records:
+    get:
+      tags:
+        - phonebook
+      summary: Get all records for user
+      description: Only for authorized user via barear token
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: userId
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Record'
+        '400':
+          description: Failed
+        '403':
+          description: User not authorized
+    post:
+      tags:
+        - phonebook
+      summary: Create new record for user
+      description: Only for authorized user via barear token
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: userId
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Record'
+        '400':
+          description: Failed
+        '403':
+          description: User not authorized
+  /phonebook/{userId}/records/{recordId}:
+    get:
+      tags:
+        - phonebook
+      summary: Get record by id for user
+      description: Only for authorized user via barear token
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: userId
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            type: string
+        - name: recordId
+          in: path
+          description: ID of record
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Record'
+        '400':
+          description: Failed
+        '403':
+          description: User not authorized
+    put:
+      tags:
+        - phonebook
+      summary: Update record by id for user
+      description: Only for authorized user via barear token
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: userId
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            type: string
+        - name: recordId
+          in: path
+          description: ID of record
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  description: Record name
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                phoneNumbers:
+                  description: Numbers related to the record
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PhoneNumber'
+              required:
+                - name
+                - phoneNumbers
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Record'
+        '400':
+          description: Failed
+        '403':
+          description: User not authorized
+    delete:
+      tags:
+        - phonebook
+      summary: delete record by id for user
+      description: Only for authorized user via barear token
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: userId
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            type: string
+        - name: recordId
+          in: path
+          description: ID of record
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deletedCount:
+                    type: number
+                  acknowledged:
+                    type: boolean
+        '400':
+          description: Failed
+        '403':
+          description: User not authorized
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        _id:
+          description: User id
+          type: string
+          example: 625c44b76be6139a87aa8053
+        firstName:
+          description: User first name
+          type: string
+          minLength: 3
+          maxLength: 50
+          example: John
+        lastName:
+          description: User last name
+          type: string
+          minLength: 3
+          maxLength: 50
+          example: Smith
+        email:
+          description: User email address
+          type: string
+          format: email
+          example: john.smith@example.com
+          uniqueItems: true
+        dateOfBirth:
+          type: number
+          description: User date of birth (timestamp)
+          example: 1331209044000
+        gender:
+          type: string
+          description: User gender (Male or Female)
+          format: string
+          enum:
+            - Male
+            - Female
+          example: Male
+      required:
+        - _id
+        - firstName
+        - lastName
+        - email
+        - dateOfBirth
+        - gender
+        - password
+    Record:
+      type: object
+      properties:
+        _id:
+          description: Record id
+          type: string
+          example: 625c44b76be6139a87aa8053
+        name:
+          description: Record name
+          type: string
+          minLength: 3
+          maxLength: 50
+        phoneNumbers:
+          description:  Numbers related to the record
+          type: array
+          items:
+            $ref: '#/components/schemas/PhoneNumber'
+        user:
+          description: User id of the record
+          type: string
+          example: 625c44b76be6139a87aa8053
+      required:
+        - _id
+        - name
+        - phoneNumbers
+        - user
+    PhoneNumber:
+      type: object
+      properties:
+        _id:
+          description: Id of the record
+          type: string
+          example: 625c44b76be6139a87aa8053
+        alias:
+          description: Alias of the phone number
+          type: string
+          minLength: 3
+          maxLength: 50
+          example: Home
+        value:
+          description: Phone number (like +380939122222)
+          type: string
+          example: "+380939122222"
+      required:
+        - _id
+        - alias
+        - value
